@@ -1,0 +1,71 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model RawProperty {
+  id           String   @id @default(uuid())
+  provider     String   // gramado-imoveis, vivareal, etc
+  providerId   String   // id original no site
+  rawTitle     String?
+  rawPrice     String?
+  rawArea      String?
+  rawBedrooms  String?
+  rawBathrooms String?
+  rawGarage    String?
+  rawNeighborhood String?
+  url          String
+  scrapedAt    DateTime @default(now())
+
+  @@unique([provider, providerId])
+}
+
+model Property {
+  id           String   @id @default(uuid())
+  provider     String
+  providerId   String
+  title        String
+  price        Float
+  area         Float?
+  bedrooms     Int?
+  bathrooms    Int?
+  garage       Int?
+  neighborhood String?
+  city         String
+  url          String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  
+  history      PropertyHistory[]
+
+  @@unique([provider, providerId])
+}
+
+model PropertyHistory {
+  id         String   @id @default(uuid())
+  propertyId String
+  price      Float
+  capturedAt DateTime @default(now())
+
+  property   Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+}
+
+model PipelineLog {
+  id        String   @id @default(uuid())
+  stage     String   // SCRAPER, ETL, ANALYTICS
+  status    String   // SUCCESS, FAILED
+  itemsFound Int?
+  itemsValid Int?
+  durationMs Int
+  error      String?
+  createdAt DateTime @default(now())
+}
